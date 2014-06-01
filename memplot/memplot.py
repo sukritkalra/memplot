@@ -13,22 +13,32 @@ __all__ = ["memplot"]
 
 def memplot(cmd,wait_time=0.05):
     usage = []
-    p = subprocess.Popen(cmd.split())
-    util_process = psutil.Process(p.pid)
-    while util_process.status() != psutil.STATUS_ZOMBIE:
-        stats = util_process.memory_info()
-        usage.append((datetime.now(),
-                      stats.rss,
-                      stats.vms,))
-        sleep(wait_time)
 
-    t,rss,vms = zip(*usage)
+    try:
+        p = subprocess.Popen(cmd.split())
+        util_process = psutil.Process(p.pid)
+        while util_process.status() != psutil.STATUS_ZOMBIE:
+            stats = util_process.memory_info()
+            usage.append((datetime.now(),
+                          stats.rss,
+                          stats.vms,))
+            sleep(wait_time)
 
-    rss = map(lambda mem: mem / float(2**20), rss)
-    plt.plot_date(x=t,y=rss,fmt="b-")
-    plt.title(cmd)
-    plt.ylabel("Memory Usage (mb)")
-    plt.xlabel("Time")
-    plt.grid(True)
-    plt.show()
+        # Poll the process to set the return code.
+        p.poll()
+        
+        # Check if the return code was not zero.
+        if p.returncode:
+            return
 
+        t,rss,vms = zip(*usage)
+
+        rss = map(lambda mem: mem / float(2**20), rss)
+        plt.plot_date(x=t,y=rss,fmt="b-")
+        plt.title(cmd)
+        plt.ylabel("Memory Usage (mb)")
+        plt.xlabel("Time")
+        plt.grid(True)
+        plt.show()
+    except OSError as err:
+        print err
