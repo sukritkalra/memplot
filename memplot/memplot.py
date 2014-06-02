@@ -24,13 +24,6 @@ def memplot(cmd,wait_time=0.05):
                           stats.vms,))
             sleep(wait_time)
 
-        # Poll the process to set the return code.
-        p.poll()
-        
-        # Check if the return code was not zero.
-        if p.returncode:
-            return
-
         t,rss,vms = zip(*usage)
 
         rss = map(lambda mem: mem / float(2**20), rss)
